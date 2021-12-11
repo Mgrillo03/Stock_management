@@ -80,7 +80,7 @@ class Product:
         #Botones eliminar y editar
         frame_ed = LabelFrame(self.wind, text= '')
         frame_ed.grid(row=2, column=0, padx= 40)
-        ttk.Button(frame_ed, text = 'Eliminar', command = self.delete_product).grid(row = 2, column = 0)
+        ttk.Button(frame_ed, text = 'Elim inar', command = self.delete_product).grid(row = 2, column = 0)
         ttk.Button(frame_ed, text = 'Editar  ', command = self.edit_product).grid(row = 2, column = 1)
 
 
@@ -214,3 +214,4 @@ class Product:
         self.message['text'] = 'El producto editado satisfactoriamente'
         self.get_products()
         self.edit_wind.destroy()
+
