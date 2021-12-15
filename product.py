@@ -80,8 +80,11 @@ class Product:
         #Botones eliminar y editar
         frame_ed = LabelFrame(self.wind, text= '')
         frame_ed.grid(row=2, column=0, padx= 40)
-        ttk.Button(frame_ed, text = 'Elim inar', command = self.delete_product).grid(row = 2, column = 0)
+        ttk.Button(frame_ed, text = 'Eliminar', command = self.delete_product).grid(row = 2, column = 0)
         ttk.Button(frame_ed, text = 'Editar  ', command = self.edit_product).grid(row = 2, column = 1)
+
+       ## self.to_hide = ttk.Button(text= 'esconder', command= self.hide)
+        #self.to_hide.grid(row= 10)
 
 
     def run_query(self, query, parameters = ()):
@@ -215,3 +218,6 @@ class Product:
         self.get_products()
         self.edit_wind.destroy()
 
+    def hide(self):
+        pass
+        #self.to_hide.grid_forget()

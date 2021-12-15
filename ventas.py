@@ -1,11 +1,16 @@
+from os import name, stat
 from sqlite3.dbapi2 import Row
 from tkinter import ttk
 from tkinter import *
 import sqlite3
+from typing import Collection
+
+
 
 
 
 class Venta:
+
 
     db_name = 'database.db'   
 
@@ -13,10 +18,12 @@ class Venta:
     def __init__(self,window):
         self.wind = window
         self.wind.title('Stock Forever Glam')
+        self.wind.geometry('900x750')
+        self.get_products_data()
 
         #creating a frame
-        frame = LabelFrame(self.wind, text = 'Agrega una venta')
-        frame.grid(row= 1, column= 0, columnspan= 3, pady= 20 )
+        frame = LabelFrame(self.wind, text = 'Registra una nueva venta')
+        frame.grid(row= 1, column= 0, columnspan= 3, pady= 20, padx= 40 )
 
         #name imput
         Label(frame, text = 'Nombre: ').grid(row= 1, column= 0)
@@ -24,27 +31,62 @@ class Venta:
         self.name.focus()
         self.name.grid(row=1, column=1)
 
-        #price imput
-        Label(frame, text= 'Precio').grid(row= 2, column= 0)
-        self.price = Entry(frame)
-        self.price.grid(row= 2, column= 1)
+        #product imput
+        Label(frame, text= 'Producto').grid(row= 2, column= 0)
+        #self.stock = Entry(frame)
+        #self.stock.grid(row= 2, column= 1)
+        self.combo = ttk.Combobox(frame, width= 16)
+        self.combo.grid(row=2, column= 1)
+        self.combo['values'] = self.names_added
+        self.combo.set('Seleccionar')
+        self.combo.bind("<<ComboboxSelected>>", self.selected)
 
+        #price
+        Label(frame, text= 'Precio').grid(row= 3, column= 0)
+        self.price = Entry(frame, textvariable= '0')
+        self.price.grid(row= 3, column= 1)
+        
+        #quantity
+        Label(frame, text= 'Cantidad').grid(row= 4, column= 0)
+        self.quantity = Entry(frame)
+        self.quantity.grid(row= 4, column= 1)
+
+        
         #button Add product
-        ttk.Button(frame, text= 'Guardar Producto', command = self.add_product).grid(row= 3, columnspan= 2, sticky= W + E )
+        ttk.Button(frame, text= 'Cargar Venta', command = self.add_sell).grid(row= 6, columnspan= 2, sticky= W + E )
 
         #Output messages
         self.message = Label(text = '', fg = 'red')
+        #control names
+        #self.names_added = []
+        
+
         self.message.grid(row = 3, columnspan = 2, sticky = W + E)
+        columns = ('product', 'quantity','price','total')
+
         #Table
-        self.tree = ttk.Treeview(height = 10, columns = 2)
-        self.tree.grid(row= 4, column= 0, columnspan = 2)
-        self.tree.heading('#0', text= 'Nombre', anchor= CENTER)
-        self.tree.heading('#1', text= 'Precio', anchor= CENTER)
+        self.tree = ttk.Treeview(height = 30, columns = columns)
+        self.tree.grid(row= 1, column= 9, columnspan = 1, rowspan= 10)
+        self.tree.heading('#0', text= 'Comprador', anchor= CENTER)
+        self.tree.heading('product', text= 'Articulo', anchor= CENTER)
+        self.tree.heading('quantity', text= 'Cantidad', anchor= CENTER)
+        self.tree.heading('price', text= 'Precio', anchor= CENTER)
+        self.tree.heading('total', text= 'Total', anchor= CENTER)
+
+        self.tree.column('#0', width= 90, anchor= CENTER)
+        self.tree.column('product', width= 200, anchor= CENTER)
+        self.tree.column('quantity', width= 40, anchor= CENTER)
+        self.tree.column('price', width= 50, anchor= CENTER)
+        self.tree.column('total', width= 50, anchor= CENTER)
+        
         self.get_products()
+        
 
         #Botones eliminar y editar
-        ttk.Button(text = 'Eliminar', command = self.delete_product).grid(row = 5, column = 0, sticky = W + E)
-        ttk.Button(text = 'Editar', command = self.edit_product).grid(row = 5, column = 1, sticky = W + E)
+        frame_ed = LabelFrame(self.wind, text= '')
+        frame_ed.grid(row=2, column=0, padx= 40)
+        ttk.Button(frame_ed, text = 'Eliminar', command = self.delete_sell).grid(row = 2, column = 0)
+        ttk.Button(frame_ed, text = 'Editar  ', command = self.edit_sell).grid(row = 2, column = 1)
 
 
     def run_query(self, query, parameters = ()):
@@ -53,6 +95,7 @@ class Venta:
             result = cursor.execute(query, parameters)
             conn.commit()            
         return result
+
     #Cargar productos de la base de datos
     def get_products(self):
         #cleanning Table
@@ -60,28 +103,34 @@ class Venta:
         for element in records :
             self.tree.delete(element)
         #quering data
-        query = 'SELECT * FROM ventas ORDER BY name DESC'
+        query = 'SELECT * FROM sell ORDER BY buyer_name DESC'
         db_rows = self.run_query(query)
+        #self.names_added=[]
         for row in db_rows:
-            self.tree.insert('', 0, text= row[1], values = row[2])
+            #self.names_added.append(row[1].upper())
+            self.tree.insert('', 0, text= row[1], values = row[2:])
 
-    def validation(self):
-        return len(self.name.get()) != 0 and len(self.price.get()) != 0
+    def validation(self, name, product, quantity, price):
+             
+        return len(name) != 0 and len(product) and len(quantity) != 0 and len(price) != 0  
+
     #Agregar Productos a la base de datos
-    def add_product(self):
-        if self.validation():
-           query = 'INSERT INTO ventas VALUES(NULL, ?, ?)'
-           parameters = (self.name.get(), self.price.get())
+    def add_sell(self):
+        
+        if self.validation(self.name.get(),self.product,self.quantity.get(),self.price.get()) :
+           self.total = float(self.price.get())*float(self.quantity.get())
+           query = 'INSERT INTO sell VALUES(NULL, ?, ?, ?, ?, ?)'
+           parameters = (self.name.get(), self.product, self.quantity.get(), self.price.get(), self.total)
            self.run_query(query, parameters)
-           self.message['text'] = 'Venta {} agregada con exito'.format(self.name.get())
+           self.message['text'] = 'Venta agregada satisfactoriamente '
            self.name.delete(0, END)
            self.price.delete(0, END)
-
-        else: 
-            self.message['text'] = 'name or price can\'t be empty'
+           self.quantity.delete(0, END)
+           self.combo.set('Seleccionar')
         self.get_products()
+
     #Eliminar Productos de la base de datos
-    def delete_product(self):
+    def delete_sell(self):
         self.message['text'] = ''
         try : 
             self.tree.item(self.tree.selection())['text'][0]
@@ -99,16 +148,18 @@ class Venta:
         Button(self.comprobacion_wind, text = 'Eliminar', command = lambda: self.comprobacion(True, name_d)).grid(row = 3, column = 1, pady= 20)
         #Button NO
         Button(self.comprobacion_wind, text = 'Cancelar', command = lambda: self.comprobacion(False, name_d)).grid(row = 3, column = 2, pady= 20)
+
     #Pregunta antes de eliminar
-    def comprobacion(self,answer,name_d):
+    def comprobation(self,answer,name_d):
         if answer : 
-            query = 'DELETE FROM ventas WHERE name = ?'
+            query = 'DELETE FROM sell WHERE buyer_name = ?'
             self.run_query(query,(name_d, ))
-            self.message['text'] = 'Venta {} elminada con exito'.format(name_d)
+            self.message['text'] = 'El producto {} elminado satisfactoriamente'.format(name_d)
             self.get_products()
         self.comprobacion_wind.destroy()
+    
     #Editar producto
-    def edit_product(self):
+    def edit_sell(self):
         self.message['text'] = ''
         try : 
             self.tree.item(self.tree.selection())['text'][0]
@@ -116,43 +167,68 @@ class Venta:
             self.message['text'] = 'Debes seleccionar un elemento'
             return
         name_d = self.tree.item(self.tree.selection())['text']
-        old_price = self.tree.item(self.tree.selection())['values'][0]
+        old_price = self.tree.item(self.tree.selection())['values'][1]
+        old_stock = self.tree.item(self.tree.selection())['values'][0]
+        old_sell_price = self.tree.item(self.tree.selection())['values'][2]
+        
         self.edit_wind = Toplevel()
-        self.edit_wind.title = 'Editar Venta'
+        self.edit_wind.title = 'Editar Producto'
 
-        #Old name
-        Label(self.edit_wind,  text= 'Nombre Anterior').grid(row = 0, column = 1)
-        Entry(self.edit_wind, textvariable = StringVar(self.edit_wind, value = name_d), state = 'readonly').grid(row = 0, column = 2)
-        #New name
-        Label(self.edit_wind,  text= 'Nombre Nuevo').grid(row = 1, column = 1)
-        new_name = Entry(self.edit_wind)
-        new_name.grid(row = 1, column = 2)
+        #name
+        Label(self.edit_wind,  text= 'Nombre').grid(row = 0, column = 1)
+        self.new_name= Entry(self.edit_wind)
+        self.new_name.grid(row = 0, column = 2)
+        self.new_name.insert(0,name_d)
         
-
-        #Old price
-        Label(self.edit_wind,  text= 'Precio Anterior').grid(row = 2, column = 1)
-        Entry(self.edit_wind, textvariable = StringVar(self.edit_wind, value = old_price), state = 'readonly').grid(row = 2, column = 2)
-        #New price
-        Label(self.edit_wind,  text= 'Precio Nuevo').grid(row =3, column = 1)
-        new_price = Entry(self.edit_wind)
-        new_price.grid(row = 3, column = 2)
-        
+        #stock
+        Label(self.edit_wind,  text= 'Stock ').grid(row = 1, column = 1)
+        self.new_stock = Entry(self.edit_wind)
+        self.new_stock.grid(row = 1, column = 2)
+        self.new_stock.insert(0, str(old_stock))
+        #price
+        Label(self.edit_wind,  text= 'Precio ').grid(row = 2, column = 1)
+        self.new_price = Entry(self.edit_wind)
+        self.new_price.grid(row = 2, column = 2)
+        self.new_price.insert(0, str(old_price))
+        #sell_price
+        Label(self.edit_wind,  text= 'Pr. Venta ').grid(row = 3, column = 1)
+        self.new_sell_price = Entry(self.edit_wind)
+        self.new_sell_price.grid(row = 3, column = 2)
+        self.new_sell_price.insert(0, str(old_sell_price))
         #Update Button
-        Button(self.edit_wind, text = 'Editar', command = lambda: self.edit_records(new_name.get(), name_d, new_price.get(), old_price)).grid(row = 4, column = 2 , sticky = W + E)
+        Button(self.edit_wind, text = 'Editar', command = lambda: self.edit_records(self.new_name.get(), name_d, self.new_price.get(), self.new_stock.get(), self.new_sell_price.get())).grid(row = 4, column = 2 , sticky = W + E)
         
-    def edit_records(self, new_name, name_d, new_price, old_price):
-        query = 'UPDATE ventas SET name =?, price = ? WHERE name = ? AND price = ? '
-        parameters = (new_name, new_price, name_d, old_price)
-        self.run_query(query,parameters)
-        self.message['text'] = 'Venta {} editada con exito'.format(name_d)
+    def edit_records(self, new_name, name_d, new_price, new_stock, new_sell_price):
+        
+        ###REVISAR QUERY
+      
+        query = 'UPDATE sell SET name =?, stock = ?, price = ?, sell_price = ?, sug_price = ? WHERE name = ?'    
+        new_sug_price = str(float(new_price) *2)
+        parameters = (new_name, new_stock, new_price, new_sell_price, new_sug_price, name_d)
+        self.run_query(query,parameters)    
+        self.message['text'] = 'El producto editado satisfactoriamente'
         self.get_products()
         self.edit_wind.destroy()
 
-''''
-if __name__ == '__main__' :
-    window = Tk()
-    application = Venta(window)
-    
-    window.mainloop()
 
-'''
+    def get_products_data(self):
+        #quering data
+        query = 'SELECT * FROM product ORDER BY name DESC'
+        db_rows = self.run_query(query)
+        self.names_added=[]
+        self.price_data = []
+        for row in db_rows:
+            self.names_added.append(row[1].upper())
+            self.price_data.append(row[4])
+        
+        
+
+    def selected(self, event):
+        ##Actualizar automaticamente el precio cada vez que se seleccione una opcion del combobox
+        option = self.combo.current()
+        price = str(self.price_data[option])
+        self.price.delete(0, END)
+        self.price.insert(0, price)
+        
+        
+        self.product = self.names_added[option]

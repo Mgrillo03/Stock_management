@@ -9,10 +9,11 @@ from product import Product
 
 
 def iniciar_product(window):
+    application = ''
     frame_w = LabelFrame(window, text = '')
     frame_w.grid(row= 0, column= 0, columnspan= 20, pady= 20, padx= 1 )
     ttk.Button(frame_w, text = 'Producto', command = lambda : start_product(window)).grid(row= 10, column= 0, padx= 5)
-    ttk.Button(frame_w, text = 'Venta', command = lambda : start_sells(window)).grid(row= 10, column= 1, padx= 10)
+    ttk.Button(frame_w, text = 'Venta', command = lambda : start_sells(window, application)).grid(row= 10, column= 1, padx= 10)
     ttk.Button(frame_w, text = 'Compra', command = lambda : start_sells(window)).grid(row= 10, column= 2, padx= 10)
     ttk.Button(frame_w, text = 'Cliente', command = lambda : start_sells(window)).grid(row= 10, column= 3, padx= 10)
     ttk.Button(frame_w, text = 'Proveedor', command = lambda : start_sells(window)).grid(row= 10, column= 4, padx= 10)
@@ -23,7 +24,8 @@ def iniciar_product(window):
 def start_product(window):
     application = Product(window)
 
-def start_sells(window):
+def start_sells(window, application):
+    application.hide()
     application = Venta(window)
 
 def start_purchases(window):
