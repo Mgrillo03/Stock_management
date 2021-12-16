@@ -5,6 +5,8 @@ from tkinter import *
 import sqlite3
 from typing import Collection
 
+from product import Product
+
 
 
 
@@ -57,23 +59,23 @@ class Venta:
 
         #Output messages
         self.message = Label(text = '', fg = 'red')
-        #control names
-        #self.names_added = []
+        self.message.grid(row = 3, columnspan = 2, sticky = W + E)
+
         
 
-        self.message.grid(row = 3, columnspan = 2, sticky = W + E)
-        columns = ('product', 'quantity','price','total')
-
         #Table
+        columns = ('name','product', 'quantity','price','total')
         self.tree = ttk.Treeview(height = 30, columns = columns)
         self.tree.grid(row= 1, column= 9, columnspan = 1, rowspan= 10)
-        self.tree.heading('#0', text= 'Comprador', anchor= CENTER)
+        self.tree.heading('#0', text= 'Codigo', anchor= CENTER)
+        self.tree.heading('name', text= 'Comprador', anchor= CENTER)
         self.tree.heading('product', text= 'Articulo', anchor= CENTER)
         self.tree.heading('quantity', text= 'Cantidad', anchor= CENTER)
         self.tree.heading('price', text= 'Precio', anchor= CENTER)
         self.tree.heading('total', text= 'Total', anchor= CENTER)
 
-        self.tree.column('#0', width= 90, anchor= CENTER)
+        self.tree.column('#0', width= 50, anchor= CENTER)
+        self.tree.column('name', width= 90, anchor= CENTER)
         self.tree.column('product', width= 200, anchor= CENTER)
         self.tree.column('quantity', width= 40, anchor= CENTER)
         self.tree.column('price', width= 50, anchor= CENTER)
@@ -103,12 +105,13 @@ class Venta:
         for element in records :
             self.tree.delete(element)
         #quering data
-        query = 'SELECT * FROM sell ORDER BY buyer_name DESC'
+        query = 'SELECT * FROM sell ORDER BY id DESC'
         db_rows = self.run_query(query)
+        print(db_rows)
         #self.names_added=[]
         for row in db_rows:
             #self.names_added.append(row[1].upper())
-            self.tree.insert('', 0, text= row[1], values = row[2:])
+            self.tree.insert('', 0, text= row[0], values = row[1:])
 
     def validation(self, name, product, quantity, price):
              
@@ -137,7 +140,7 @@ class Venta:
         except IndexError as e: 
             self.message['text'] = 'Debes seleccionar un elemento'
             return
-        name_d = self.tree.item(self.tree.selection())['text']
+        id = self.tree.item(self.tree.selection())['text']
         self.comprobacion_wind = Toplevel()
         self.comprobacion_wind.geometry("300x100")
         question = 'Esta seguro que desea eliminar {}'.format(name_d)
@@ -145,16 +148,16 @@ class Venta:
         Label(self.comprobacion_wind, text = question).grid(row = 0, column = 1)
         answer = False
         #Button Yes
-        Button(self.comprobacion_wind, text = 'Eliminar', command = lambda: self.comprobacion(True, name_d)).grid(row = 3, column = 1, pady= 20)
+        Button(self.comprobacion_wind, text = 'Eliminar', command = lambda: self.comprobacion(True, id)).grid(row = 3, column = 1, pady= 20)
         #Button NO
-        Button(self.comprobacion_wind, text = 'Cancelar', command = lambda: self.comprobacion(False, name_d)).grid(row = 3, column = 2, pady= 20)
+        Button(self.comprobacion_wind, text = 'Cancelar', command = lambda: self.comprobacion(False, id)).grid(row = 3, column = 2, pady= 20)
 
     #Pregunta antes de eliminar
-    def comprobation(self,answer,name_d):
+    def comprobation(self,answer,id):
         if answer : 
-            query = 'DELETE FROM sell WHERE buyer_name = ?'
-            self.run_query(query,(name_d, ))
-            self.message['text'] = 'El producto {} elminado satisfactoriamente'.format(name_d)
+            query = 'DELETE FROM sell WHERE id = ?'
+            self.run_query(query,(id, ))
+            self.message['text'] = 'El producto {} elminado satisfactoriamente'.format(id)
             self.get_products()
         self.comprobacion_wind.destroy()
     
@@ -162,14 +165,15 @@ class Venta:
     def edit_sell(self):
         self.message['text'] = ''
         try : 
-            self.tree.item(self.tree.selection())['text'][0]
+            self.tree.item(self.tree.selection())['values'][0]
         except IndexError as e: 
             self.message['text'] = 'Debes seleccionar un elemento'
             return
-        name_d = self.tree.item(self.tree.selection())['text']
-        old_price = self.tree.item(self.tree.selection())['values'][1]
-        old_stock = self.tree.item(self.tree.selection())['values'][0]
-        old_sell_price = self.tree.item(self.tree.selection())['values'][2]
+        id = self.tree.item(self.tree.selection())['text']
+        old_name = self.tree.item(self.tree.selection())['values'][0]
+        old_product = self.tree.item(self.tree.selection())['values'][1]
+        old_quantity = self.tree.item(self.tree.selection())['values'][2]
+        old_price = self.tree.item(self.tree.selection())['values'][3]
         
         self.edit_wind = Toplevel()
         self.edit_wind.title = 'Editar Producto'
@@ -178,33 +182,36 @@ class Venta:
         Label(self.edit_wind,  text= 'Nombre').grid(row = 0, column = 1)
         self.new_name= Entry(self.edit_wind)
         self.new_name.grid(row = 0, column = 2)
-        self.new_name.insert(0,name_d)
+        self.new_name.insert(0,old_name)
         
         #stock
-        Label(self.edit_wind,  text= 'Stock ').grid(row = 1, column = 1)
-        self.new_stock = Entry(self.edit_wind)
-        self.new_stock.grid(row = 1, column = 2)
-        self.new_stock.insert(0, str(old_stock))
+        Label(self.edit_wind,  text= 'Producto ').grid(row = 1, column = 1)
+        self.combo_edit = ttk.Combobox(self.edit_wind, width= 16)
+        self.combo_edit.grid(row=1, column= 2)
+        self.combo_edit['values'] = self.names_added
+        self.combo_edit.set(old_product)
+
         #price
-        Label(self.edit_wind,  text= 'Precio ').grid(row = 2, column = 1)
-        self.new_price = Entry(self.edit_wind)
-        self.new_price.grid(row = 2, column = 2)
-        self.new_price.insert(0, str(old_price))
+        Label(self.edit_wind,  text= 'Cantidad ').grid(row = 2, column = 1)
+        self.new_quantity = Entry(self.edit_wind)
+        self.new_quantity.grid(row = 2, column = 2)
+        self.new_quantity.insert(0, str(old_quantity))
         #sell_price
-        Label(self.edit_wind,  text= 'Pr. Venta ').grid(row = 3, column = 1)
-        self.new_sell_price = Entry(self.edit_wind)
-        self.new_sell_price.grid(row = 3, column = 2)
-        self.new_sell_price.insert(0, str(old_sell_price))
+        Label(self.edit_wind,  text= 'Precio ').grid(row = 3, column = 1)
+        self.new_price = Entry(self.edit_wind)
+        self.new_price.grid(row = 3, column = 2)
+        self.new_price.insert(0, str(old_price))
         #Update Button
-        Button(self.edit_wind, text = 'Editar', command = lambda: self.edit_records(self.new_name.get(), name_d, self.new_price.get(), self.new_stock.get(), self.new_sell_price.get())).grid(row = 4, column = 2 , sticky = W + E)
+        Button(self.edit_wind, text = 'Editar', command = lambda: self.edit_records(self.new_name.get(), self.new_quantity.get(), self.new_price.get(),id)).grid(row = 4, column = 2 , sticky = W + E)
         
-    def edit_records(self, new_name, name_d, new_price, new_stock, new_sell_price):
-        
+    def edit_records(self, new_name, new_quantity, new_price, id):
+        #seleccionar combobox
+        new_product = self.combo_edit.get()
+        total = float(new_quantity) * float(new_price)
         ###REVISAR QUERY
       
-        query = 'UPDATE sell SET name =?, stock = ?, price = ?, sell_price = ?, sug_price = ? WHERE name = ?'    
-        new_sug_price = str(float(new_price) *2)
-        parameters = (new_name, new_stock, new_price, new_sell_price, new_sug_price, name_d)
+        query = 'UPDATE sell SET buyer_name =?, product = ?, quantity = ?, price = ?, total = ? WHERE id = ?'    
+        parameters = (new_name, new_product, new_quantity, new_price, total, id)
         self.run_query(query,parameters)    
         self.message['text'] = 'El producto editado satisfactoriamente'
         self.get_products()
@@ -228,7 +235,6 @@ class Venta:
         option = self.combo.current()
         price = str(self.price_data[option])
         self.price.delete(0, END)
-        self.price.insert(0, price)
-        
+        self.price.insert(0, price)  
         
         self.product = self.names_added[option]

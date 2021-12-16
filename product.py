@@ -69,10 +69,10 @@ class Product:
         self.tree.heading('sug_sell_price', text= 'Sugerido', anchor= CENTER)
 
         self.tree.column('#0', width= 200, anchor= CENTER)
-        self.tree.column('stock', width= 50, anchor= CENTER)
-        self.tree.column('price', width= 60, anchor= CENTER)
-        self.tree.column('sell_price', width= 60, anchor= CENTER)
-        self.tree.column('sug_sell_price', width= 60, anchor= CENTER)
+        self.tree.column('stock', width= 60, anchor= CENTER)
+        self.tree.column('price', width= 70, anchor= CENTER)
+        self.tree.column('sell_price', width= 70, anchor= CENTER)
+        self.tree.column('sug_sell_price', width= 70, anchor= CENTER)
         
         self.get_products()
         
@@ -220,4 +220,4 @@ class Product:
 
     def hide(self):
         pass
-        #self.to_hide.grid_forget()
+        #   self.to_hide.grid_forget()
