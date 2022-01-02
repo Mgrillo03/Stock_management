@@ -107,17 +107,16 @@ class Venta:
         #quering data
         query = 'SELECT * FROM sell ORDER BY id DESC'
         db_rows = self.run_query(query)
-        print(db_rows)
-        #self.names_added=[]
+        #print(db_rows)
+        
         for row in db_rows:
-            #self.names_added.append(row[1].upper())
             self.tree.insert('', 0, text= row[0], values = row[1:])
 
     def validation(self, name, product, quantity, price):
              
         return len(name) != 0 and len(product) and len(quantity) != 0 and len(price) != 0  
 
-    #Agregar Productos a la base de datos
+    #Agregar Ventas a la base de datos
     def add_sell(self):
         
         if self.validation(self.name.get(),self.product,self.quantity.get(),self.price.get()) :
@@ -132,25 +131,27 @@ class Venta:
            self.combo.set('Seleccionar')
         self.get_products()
 
-    #Eliminar Productos de la base de datos
+    #Eliminar Ventass de la base de datos
     def delete_sell(self):
         self.message['text'] = ''
         try : 
-            self.tree.item(self.tree.selection())['text'][0]
+            self.tree.item(self.tree.selection())['values'][0]
         except IndexError as e: 
             self.message['text'] = 'Debes seleccionar un elemento'
             return
         id = self.tree.item(self.tree.selection())['text']
-        self.comprobacion_wind = Toplevel()
-        self.comprobacion_wind.geometry("300x100")
-        question = 'Esta seguro que desea eliminar {}'.format(name_d)
+        self.comprobation_wind = Toplevel()
+        self.comprobation_wind.geometry("280x100")
+        frame = LabelFrame(self.comprobation_wind, text = 'Eliminar')
+        frame.grid(row= 0, column= 0, columnspan= 2, pady= 10, padx= 5 )
+        question = 'Esta seguro que desea eliminar la compra {}'.format(id)
         #Label(self.comprobacion_wind, text = ' ').grid(row = 0, column = 0, padx = 20)
-        Label(self.comprobacion_wind, text = question).grid(row = 0, column = 1)
+        Label(frame, text = question).grid(row = 0, column = 0, columnspan=2)
         answer = False
         #Button Yes
-        Button(self.comprobacion_wind, text = 'Eliminar', command = lambda: self.comprobacion(True, id)).grid(row = 3, column = 1, pady= 20)
+        Button(frame, text = 'Eliminar', command = lambda: self.comprobation(True, id)).grid(row = 3, column = 0, pady= 1,sticky= W + E)
         #Button NO
-        Button(self.comprobacion_wind, text = 'Cancelar', command = lambda: self.comprobacion(False, id)).grid(row = 3, column = 2, pady= 20)
+        Button(frame, text = 'Cancelar', command = lambda: self.comprobation(False, id)).grid(row = 3, column = 1, pady= 1,sticky= W + E)
 
     #Pregunta antes de eliminar
     def comprobation(self,answer,id):
@@ -159,12 +160,12 @@ class Venta:
             self.run_query(query,(id, ))
             self.message['text'] = 'El producto {} elminado satisfactoriamente'.format(id)
             self.get_products()
-        self.comprobacion_wind.destroy()
+        self.comprobation_wind.destroy()
     
-    #Editar producto
+    #Editar venta
     def edit_sell(self):
         self.message['text'] = ''
-        try : 
+        try :  
             self.tree.item(self.tree.selection())['values'][0]
         except IndexError as e: 
             self.message['text'] = 'Debes seleccionar un elemento'
@@ -235,6 +236,5 @@ class Venta:
         option = self.combo.current()
         price = str(self.price_data[option])
         self.price.delete(0, END)
-        self.price.insert(0, price)  
-        
+        self.price.insert(0, price)          
         self.product = self.names_added[option]

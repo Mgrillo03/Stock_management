@@ -146,25 +146,27 @@ class Product:
             self.message['text'] = 'Debes seleccionar un elemento'
             return
         name_d = self.tree.item(self.tree.selection())['text']
-        self.comprobacion_wind = Toplevel()
-        self.comprobacion_wind.geometry("300x100")
+        self.comprobation_wind = Toplevel()
+        self.comprobation_wind.geometry("300x100")
+        frame = LabelFrame(self.comprobation_wind, text = 'Eliminar')
+        frame.grid(row= 0, column= 0, columnspan= 2, pady= 10, padx= 5 )
         question = 'Esta seguro que desea eliminar {}'.format(name_d)
         #Label(self.comprobacion_wind, text = ' ').grid(row = 0, column = 0, padx = 20)
-        Label(self.comprobacion_wind, text = question).grid(row = 0, column = 1)
+        Label(frame, text = question).grid(row = 0, column = 0,columnspan= 2)
         answer = False
         #Button Yes
-        Button(self.comprobacion_wind, text = 'Eliminar', command = lambda: self.comprobacion(True, name_d)).grid(row = 3, column = 1, pady= 20)
+        Button(frame, text = 'Eliminar', command = lambda: self.comprobation(True, name_d)).grid(row = 3, column = 0,sticky= W + E)
         #Button NO
-        Button(self.comprobacion_wind, text = 'Cancelar', command = lambda: self.comprobacion(False, name_d)).grid(row = 3, column = 2, pady= 20)
+        Button(frame, text = 'Cancelar', command = lambda: self.comprobation(False, name_d)).grid(row = 3, column = 1, sticky= W + E)
 
     #Pregunta antes de eliminar
-    def comprobacion(self,answer,name_d):
+    def comprobation(self,answer,name_d):
         if answer : 
             query = 'DELETE FROM product WHERE name = ?'
             self.run_query(query,(name_d, ))
             self.message['text'] = 'El producto {} elminado satisfactoriamente'.format(name_d)
             self.get_products()
-        self.comprobacion_wind.destroy()
+        self.comprobation_wind.destroy()
     
     #Editar producto
     def edit_product(self):
